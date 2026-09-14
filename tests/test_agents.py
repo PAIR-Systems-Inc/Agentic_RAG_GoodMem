@@ -1,6 +1,7 @@
 from types import SimpleNamespace as NS
 
 import pytest
+from langchain_core.documents import Document
 from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableLambda
@@ -98,7 +99,8 @@ def test_source_provenance_does_not_depend_on_model_following_citation_instructi
     result = {"messages": [
         ToolMessage(content="Source: https://example.org/langgraph/overview\nTitle: Overview\n"
                             "Evidence mentioning https://example.org/unretrieved-page",
-                    tool_call_id="1"),
+                    tool_call_id="1", artifact=[Document(page_content="Evidence",
+                        metadata={"source": "https://example.org/langgraph/overview"})]),
         AIMessage(content="Answer without inline citations."),
     ]}
     answer = answer_text(result)

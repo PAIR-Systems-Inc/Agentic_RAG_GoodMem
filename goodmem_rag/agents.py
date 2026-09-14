@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import re
 from typing import Literal
 
 from langchain.agents import create_agent
 from langchain.agents.middleware import ModelCallLimitMiddleware, ToolCallLimitMiddleware
+from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
@@ -162,8 +162,10 @@ def answer_text(result: dict) -> str:
 
 def evidence_sources(result: dict) -> list[str]:
     return list(dict.fromkeys(
-        url for message in result["messages"] if isinstance(message, ToolMessage)
-        for url in re.findall(r"^Source: (https?://\S+)$", message.text, re.MULTILINE)
+        doc.metadata["source"] for message in result["messages"] if isinstance(message, ToolMessage)
+        for doc in (message.artifact or []) if isinstance(doc, Document)
+        and isinstance(doc.metadata.get("source"), str)
+        and doc.metadata["source"].startswith(("https://", "http://"))
     ))
 
 

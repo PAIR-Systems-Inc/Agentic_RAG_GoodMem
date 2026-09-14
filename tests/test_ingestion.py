@@ -1,25 +1,8 @@
-from types import SimpleNamespace as NS
-
 import httpx
 import pytest
 
 from goodmem_rag.config import Settings, save_json
-from goodmem_rag.ingestion import source_document, wait_for_memory
-
-
-def test_failed_indexing_and_timeout_are_not_reported_ready():
-    failed = NS(memories=NS(get=lambda **kw: NS(processing_status="FAILED")))
-    with pytest.raises(RuntimeError, match="FAILED"):
-        wait_for_memory(failed, "memory", 1)
-    pending = NS(memories=NS(get=lambda **kw: NS(processing_status="PENDING")))
-    with pytest.raises(TimeoutError, match="exceeded"):
-        wait_for_memory(pending, "memory", 0)
-
-
-def test_waits_for_completed_indexing():
-    states = iter(["PENDING", "PROCESSING", "COMPLETED"])
-    client = NS(memories=NS(get=lambda **kw: NS(processing_status=next(states))))
-    assert wait_for_memory(client, "memory", 5, interval=0).processing_status == "COMPLETED"
+from goodmem_rag.ingestion import source_document
 
 
 def test_markdown_downloads_preserve_source_and_content_digest():

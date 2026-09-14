@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import os
-import time
 import uuid
 from collections.abc import Callable
 
@@ -12,6 +11,7 @@ import httpx
 from bs4 import BeautifulSoup
 from goodmem import Goodmem
 from goodmem.errors import ConflictError, NotFoundError
+from langchain_goodmem import wait_for_memory
 
 from .config import Settings, save_json
 
@@ -59,22 +59,6 @@ def source_document(url: str, http: httpx.Client) -> dict:
         raise ValueError(f"Suspiciously short documentation response from {url}")
     return {"source": url, "title": title, "text": text,
             "sha256": hashlib.sha256(text.encode()).hexdigest()}
-
-
-def wait_for_memory(client, memory_id: str, timeout: float, interval: float = 1):
-    deadline = time.monotonic() + timeout
-    while True:
-        memory = client.memories.get(id=memory_id)
-        if memory.processing_status == "COMPLETED":
-            return memory
-        if memory.processing_status not in {"PENDING", "PROCESSING"}:
-            raise RuntimeError(
-                f"Memory {memory_id}: indexing {memory.processing_status}. "
-                "Inspect it with include_processing_history=True; check the embedder credentials."
-            )
-        if time.monotonic() >= deadline:
-            raise TimeoutError(f"Memory {memory_id}: indexing exceeded {timeout}s")
-        time.sleep(min(interval, max(0, deadline - time.monotonic())))
 
 
 def _ensure(get: Callable, create: Callable):

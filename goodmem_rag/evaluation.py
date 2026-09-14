@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from langchain_core.messages import HumanMessage, ToolMessage
+from langchain_goodmem import GoodMemRetriever
 
 from .agents import (
     answer_text,
@@ -18,7 +19,7 @@ from .agents import (
     tool_calls,
 )
 from .config import chat_model, save_json
-from .retrieval import GoodMemRetriever, make_tools
+from .retrieval import make_tools
 
 RETRIEVAL_CASES = [
     ("state", "langgraph", "What are state, nodes and edges in StateGraph?", "graph-api", ["state", "nodes", "edges"]),
@@ -43,7 +44,8 @@ SEQUENTIAL_QUESTION = (
 
 
 def _citations(text: str) -> set[str]:
-    return set(re.findall(r"https://docs\.langchain\.com/[^\s)\]>]+", text))
+    return {url.rstrip(".,;:!?")
+            for url in re.findall(r"https://docs\.langchain\.com/[^\s)\]>]+", text)}
 
 
 def evaluate(client, settings, state: dict, output: str, retrieval_only: bool = False) -> bool:
@@ -51,7 +53,7 @@ def evaluate(client, settings, state: dict, output: str, retrieval_only: bool = 
     report = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "server": client.system.info().model_dump(mode="json", exclude_none=True),
-        "packages": {p: importlib.metadata.version(p) for p in ["goodmem", "langchain", "langgraph"]},
+        "packages": {p: importlib.metadata.version(p) for p in ["goodmem", "langchain-goodmem", "langchain", "langgraph"]},
         "chat_model": getattr(model, "model", None),
         "embedder_model": client.embedders.get(id=state["embedder_id"]).model_identifier,
         "reranker_model": (client.rerankers.get(id=state["reranker_id"]).model_identifier
@@ -68,7 +70,7 @@ def evaluate(client, settings, state: dict, output: str, retrieval_only: bool = 
         for name, collection, query, expected_page, keywords in RETRIEVAL_CASES:
             start = time.monotonic()
             docs = GoodMemRetriever(
-                client, state["spaces"][collection],
+                client=client, space_ids=[state["spaces"][collection]],
                 reranker_id=state.get("reranker_id") if rerank else None,
             ).invoke(query)
             text = "\n".join(d.page_content for d in docs).lower()

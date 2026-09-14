@@ -1,5 +1,7 @@
 # GoodMem migration findings
 
+**Update for the local integration review:** the shared `goodmem-langchain` package now implements document normalization and ingestion waiting, and the application uses it. The results below describe the original committed adaptation. The [new assessment](langchain-integration-review.md) records the proposed library fixes, smaller app, 16/16 retrieval checks, and 7/8 agent checks (one model-generated link to a page that was not retrieved). Neither set of results proves a quality improvement over Chroma.
+
 The migration works against a real GoodMem instance. The application uses the published `goodmem==0.1.34` Python SDK and a pinned `server-v1.0.311` container. Cohere `embed-v4.0` supplies embeddings, `rerank-v3.5` supplies optional reranking, and the application uses `command-a-03-2025` for chat. **No LLM is registered in GoodMem.** Groq remains configurable as the upstream chat default; the recorded live run used Cohere.
 
 The four notebook files and their original Git history are retained. GoodMem owns whole-document storage, chunking, embedding, retrieval, and reranking. LangGraph still owns the agent's decisions, grading, drafting, and follow-up lookups.

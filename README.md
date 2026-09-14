@@ -22,6 +22,12 @@ flowchart LR
 
 GoodMem reranking **does not require an LLM**. The chat model runs in the agent application. This demo does not register an LLM or request summarization inside GoodMem.
 
+## Local integration review
+
+This working tree uses the unreleased `langchain-goodmem==0.2.0.dev0` from the sibling `../goodmem-langchain` checkout through `tool.uv.sources`. Keep both checkouts next to each other and run `uv sync --locked`. The shared integration changes and this adoption are uncommitted and unpublished, awaiting review. The dependency must become an approved release or immutable commit before publishing this update.
+
+The shared package supplies the standard retriever, fixed-space tools, citation artifacts, and indexing wait helper. This application retains its documentation URLs, extraction, content hashes, replacement policy, and agent workflows. See [the integration assessment](docs/langchain-integration-review.md) for exact code reductions and current validation, including one generated-citation failure.
+
 ## Quickstart
 
 You need Python 3.11+, [uv](https://docs.astral.sh/uv/), Docker Compose, and a Cohere API key. The tested one-provider configuration uses Cohere for embeddings, optional reranking, and agent chat. Groq, the original project's chat provider, is also supported.
@@ -89,7 +95,7 @@ uv run --group notebooks jupyter lab
 
 Choose the project's `.venv` Python interpreter. All notebooks have clean outputs in Git. The first two need only chat credentials; the RAG notebooks also need the configured GoodMem instance. Graph diagrams are Mermaid text, so execution does not depend on a remote rendering API.
 
-The notebooks share the tested code in [goodmem_rag](goodmem_rag/). The explicit graph grades all results from the latest retrieval round, retains accumulated evidence, and completes pending tool calls before stopping at its hop limit. The ReAct agent enforces tool and model call limits. Each answer includes a deterministic **Sources consulted** list from the retrieved metadata; inline claim citations remain model generated.
+The notebooks share the tested code in [goodmem_rag](goodmem_rag/). The explicit graph grades all results from the latest retrieval round, retains accumulated evidence, and completes pending tool calls before stopping at its hop limit. The ReAct agent enforces tool and model call limits. Each answer includes a deterministic **Sources consulted** list from the shared tools’ `Document` artifacts; inline claim citations remain model generated.
 
 ## Validation and findings
 

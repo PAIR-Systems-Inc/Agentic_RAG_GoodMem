@@ -12,7 +12,7 @@ from langchain_core.messages import HumanMessage
 from .agents import answer_text, build_agentic_graph, build_react_agent, tool_calls
 from .config import Settings, chat_model
 from .ingestion import setup
-from .retrieval import GoodMemRetriever, format_documents, make_tools
+from .retrieval import make_tools
 
 
 def main():
@@ -41,11 +41,9 @@ def main():
         state = settings.state()
         with settings.client() as client:
             if args.command == "search":
-                retriever = GoodMemRetriever(
-                    client, state["spaces"][args.collection],
-                    reranker_id=None if args.no_rerank else state.get("reranker_id"),
-                )
-                print(format_documents(retriever.invoke(args.question)))
+                tools = make_tools(client, state, rerank=not args.no_rerank)
+                selected = next(t for t in tools if t.name == f"{args.collection}_docs_tool")
+                print(selected.invoke({"query": args.question}) or "No relevant documents found.")
             elif args.command == "ask":
                 tools = make_tools(client, state)
                 builder = build_agentic_graph if args.agent == "graph" else build_react_agent

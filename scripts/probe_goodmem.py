@@ -5,9 +5,10 @@ from pathlib import Path
 
 from goodmem import Goodmem
 from goodmem.errors import AuthenticationError, NotFoundError
+from langchain_goodmem import GoodMemRetrievalError, GoodMemRetriever
+from langchain_goodmem.retrievers import documents_from_events
 
 from goodmem_rag.config import Settings, save_json
-from goodmem_rag.retrieval import GoodMemRetriever, RetrievalFailure, documents_from_events
 
 settings = Settings.from_env()
 state = settings.state()
@@ -19,13 +20,13 @@ with settings.client() as client:
         space_embedders=[{"embedder_id": state["embedder_id"]}],
     )
     try:
-        report["empty_space_returns_empty"] = GoodMemRetriever(client, empty.space_id).invoke("state") == []
+        report["empty_space_returns_empty"] = GoodMemRetriever(client=client, space_ids=[empty.space_id]).invoke("state") == []
     finally:
         client.spaces.delete(id=empty.space_id)
     try:
-        GoodMemRetriever(client, str(uuid.uuid4())).invoke("state")
+        GoodMemRetriever(client=client, space_ids=[str(uuid.uuid4())]).invoke("state")
         report["missing_space_detected"] = False
-    except (RetrievalFailure, NotFoundError) as exc:
+    except (GoodMemRetrievalError, NotFoundError) as exc:
         report["missing_space_detected"] = True
         report["missing_space_diagnostic"] = str(exc)
     if state.get("reranker_id"):
@@ -46,7 +47,7 @@ with settings.client() as client:
     report["corpus_memory_counts"] = counts
 try:
     with Goodmem(base_url=settings.base_url, api_key="gm_invalid_probe_key", timeout=30) as bad:
-        GoodMemRetriever(bad, state["spaces"]["langgraph"]).invoke("state")
+        GoodMemRetriever(client=bad, space_ids=[state["spaces"]["langgraph"]]).invoke("state")
     report["invalid_key_rejected"] = False
 except AuthenticationError:
     report["invalid_key_rejected"] = True
