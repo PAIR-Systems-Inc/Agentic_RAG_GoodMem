@@ -23,6 +23,10 @@ def test_tools_use_the_selected_collection_and_reranker(rerank):
                               "args": {"query": "question"}})
         assert isinstance(result, ToolMessage) and result.artifact == []
         request = client.memories.retrieve.call_args.kwargs
-        assert request["space_ids"] == [space]
+        assert "space_ids" not in request
+        assert [key.space_id for key in request["space_keys"]] == [space]
+        assert request["space_keys"][0].filter == (
+            "CAST(val('$.application') AS TEXT) = 'agentic-rag-goodmem'"
+        )
         assert request.get("reranker_id") == ("reranker" if rerank else None)
         assert request["requested_size"] == (20 if rerank else 5)

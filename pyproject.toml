@@ -9,7 +9,7 @@ dependencies = [
     "goodmem==0.1.34",
     "httpx>=0.28,<1",
     "langchain>=1.0,<2",
-    "langchain-goodmem==0.2.0.dev0",
+    "langchain-goodmem==0.2.0",
     "langchain-cohere>=0.5,<1",
     "langchain-groq>=1.0,<2",
     "langgraph>=1.0,<2",
@@ -41,5 +41,3 @@ select = ["E4", "E7", "E9", "F", "I"]
 testpaths = ["tests"]
 
 # Local review only. Replace with an approved release/commit before publishing.
-[tool.uv.sources]
-langchain-goodmem = { path = "../goodmem-langchain", editable = true }

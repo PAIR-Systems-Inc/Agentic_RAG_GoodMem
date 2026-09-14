@@ -1,12 +1,12 @@
 # GoodMem migration findings
 
-**Update for the local integration review:** the shared `goodmem-langchain` package now implements document normalization and ingestion waiting, and the application uses it. The results below describe the original committed adaptation. The [new assessment](langchain-integration-review.md) records the proposed library fixes, smaller app, 16/16 retrieval checks, and 7/8 agent checks (one model-generated link to a page that was not retrieved). Neither set of results proves a quality improvement over Chroma.
+**Update for published LangChain 0.2.0:** the application now installs `langchain-goodmem==0.2.0` from PyPI for Document retrieval, metadata filtering and indexing readiness. The [integration assessment](langchain-integration-review.md) records the release validation and smaller application. The results below describe the original SDK adaptation; neither set of results proves a quality improvement over Chroma.
 
 The migration works against a real GoodMem instance. The application uses the published `goodmem==0.1.34` Python SDK and a pinned `server-v1.0.311` container. Cohere `embed-v4.0` supplies embeddings, `rerank-v3.5` supplies optional reranking, and the application uses `command-a-03-2025` for chat. **No LLM is registered in GoodMem.** Groq remains configurable as the upstream chat default; the recorded live run used Cohere.
 
 The four notebook files and their original Git history are retained. GoodMem owns whole-document storage, chunking, embedding, retrieval, and reranking. LangGraph still owns the agent's decisions, grading, drafting, and follow-up lookups.
 
-## Observed results
+## Observed results from the original SDK adaptation
 
 | Check | Result |
 | --- | --- |
@@ -57,7 +57,7 @@ Product improvement: document the scoring direction and scale for each stage, an
 
 The adapter explicitly requests `fetch_memory=True`, joins by memory UUID in two passes, deduplicates chunks, and fails if citation metadata is missing. Unit tests include definitions arriving after chunks. `fetch_memory_content=False` avoids shipping original document bodies into every retrieval result.
 
-Product improvement: a supported helper returning text, score, memory metadata, and source together would make common RAG integrations smaller.
+Addressed for LangChain in 0.2.0: `GoodMemRetriever` performs these joins and returns standard Documents with source metadata and identifiers. The application no longer maintains this normalizer.
 
 ## 4. Upload success is not indexing completion
 
@@ -65,7 +65,7 @@ Product improvement: a supported helper returning text, score, memory metadata, 
 
 Stable IDs and content hashes make reruns repeatable. Replaced document versions are removed only after the replacement reaches `COMPLETED`.
 
-Product improvement: an SDK `create_and_wait` or `wait_until_ready` helper with processing diagnostics would remove common application glue. The current API contract is workable; this is convenience friction rather than a retrieval defect.
+Addressed for LangChain in 0.2.0: `add_documents` waits by default, and `wait_for_memory` checks a specific memory ID for applications using SDK ingestion. Retrieval never assumes an empty result means indexing is pending.
 
 ## 5. A source URL does not ingest a web page
 
@@ -82,6 +82,12 @@ The Python package used here is `goodmem`, not the separate legacy `goodmem-clie
 GoodMem deduplicates equivalent embedder configurations in addition to checking client-supplied IDs. A second namespace should reuse an existing embedder ID rather than assume a different UUID permits an equivalent model registration. The live probe records this behavior.
 
 A smaller observed metadata inconsistency: `/v1/system/info` returned `version=server-v1.0.311` and `git_describe=server-v1.0.311`, but all three numeric version fields were zero. Validation records the full version string and commit rather than using the numeric fields.
+
+## 7. Metadata filter expressions have surprising behavior
+
+Observed while validating the LangChain integration against the same server: `val('$.application') = 'agentic-rag-goodmem'` returned no matches despite matching metadata. The explicit text cast, `CAST(val('$.application') AS TEXT) = 'agentic-rag-goodmem'`, returned the expected five chunks. The application uses this expression because `val` returns JSON.
+
+A bare `TRUE` filter produced `VECTOR_SEARCH_FAILED` with `Expected a condition but got a org.jooq.impl.Val`. The retriever exposes that server error. These server behaviors were recorded, not patched in the integration.
 
 ## Agent and upstream issues, separate from GoodMem
 

@@ -14,6 +14,7 @@ def make_tools(client, state: dict, *, rerank: bool = True):
         create_retriever_tool(
             GoodMemRetriever(
                 client=client, space_ids=[state["spaces"][collection]],
+                filter="CAST(val('$.application') AS TEXT) = 'agentic-rag-goodmem'",
                 reranker_id=state.get("reranker_id") if rerank else None,
             ),
             name=f"{collection}_docs_tool", description=description,

@@ -9,7 +9,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from langchain_core.messages import HumanMessage, ToolMessage
-from langchain_goodmem import GoodMemRetriever
 
 from .agents import (
     answer_text,
@@ -67,12 +66,12 @@ def evaluate(client, settings, state: dict, output: str, retrieval_only: bool = 
     }
     modes = [False, True] if state.get("reranker_id") else [False]
     for rerank in modes:
+        tools = {tool.name: tool for tool in make_tools(client, state, rerank=rerank)}
         for name, collection, query, expected_page, keywords in RETRIEVAL_CASES:
             start = time.monotonic()
-            docs = GoodMemRetriever(
-                client=client, space_ids=[state["spaces"][collection]],
-                reranker_id=state.get("reranker_id") if rerank else None,
-            ).invoke(query)
+            tool = tools[f"{collection}_docs_tool"]
+            docs = tool.invoke({"type": "tool_call", "id": f"eval-{name}", "name": tool.name,
+                                "args": {"query": query}}).artifact
             text = "\n".join(d.page_content for d in docs).lower()
             sources = [d.metadata.get("source", "") for d in docs]
             passed = (any(s.endswith("/" + expected_page) for s in sources)

@@ -22,11 +22,11 @@ flowchart LR
 
 GoodMem reranking **does not require an LLM**. The chat model runs in the agent application. This demo does not register an LLM or request summarization inside GoodMem.
 
-## Local integration review
+## LangChain integration
 
-This working tree uses the unreleased `langchain-goodmem==0.2.0.dev0` from the sibling `../goodmem-langchain` checkout through `tool.uv.sources`. Keep both checkouts next to each other and run `uv sync --locked`. The shared integration changes and this adoption are uncommitted and unpublished, awaiting review. The dependency must become an approved release or immutable commit before publishing this update.
+The project pins [langchain-goodmem 0.2.0](https://pypi.org/project/langchain-goodmem/0.2.0/) from PyPI. `uv sync --locked` installs the published package; this repository is sufficient to run the demo.
 
-The shared package supplies the standard retriever, fixed-space tools, citation artifacts, and indexing wait helper. This application retains its documentation URLs, extraction, content hashes, replacement policy, and agent workflows. See [the integration assessment](docs/langchain-integration-review.md) for exact code reductions and current validation, including one generated-citation failure.
+The shared package supplies `GoodMemRetriever`, citation artifacts, metadata filtering, and `wait_for_memory`. Each LangChain search tool is bound to one collection and filters for this application's documents. Setup uses the SDK for deterministic memory IDs and original source references, and the shared helper for indexing readiness. See [the integration assessment](docs/langchain-integration-review.md) for code reductions and validation.
 
 ## Quickstart
 
