@@ -2,7 +2,7 @@
 
 A working GoodMem adaptation of [Chandula Senevirathna's Agentic_RAG](https://github.com/ChandulaSenevirathna/Agentic_RAG). It keeps the four-notebook progression and both agent patterns, and moves document chunking, embedding, persistence, retrieval, and optional reranking into GoodMem.
 
-The original commit history and [license notice](LICENSE.md) are preserved. See [upstream provenance](docs/upstream.md). This repository is a private evaluation adaptation because upstream's mixed license still names older notebook files.
+The original commit history and [license notice](LICENSE.md) are preserved. Upstream's mixed license still names older notebook files; see [upstream provenance](docs/upstream.md) for details.
 
 ```mermaid
 flowchart LR
