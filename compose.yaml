@@ -1,0 +1,35 @@
+name: agentic-rag-goodmem
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: goodmem
+      POSTGRES_PASSWORD: local-demo-password
+      POSTGRES_DB: goodmem
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U goodmem -d goodmem"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  goodmem:
+    # Validated server-v1.0.311. Pin upgrades deliberately and rerun the evaluation.
+    image: ghcr.io/pair-systems-inc/goodmem/server@sha256:0897f60a0700d2bd023db69f0907923ad0e25b8ae836e8152d93095417cf5a60
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/goodmem
+      DB_USER: goodmem
+      DB_PASSWORD: local-demo-password
+      GOODMEM_TLS_DISABLED: "true"
+    ports:
+      - "127.0.0.1:${GOODMEM_PORT:-8088}:8080"
+    healthcheck:
+      test: ["CMD", "/app/healthcheck"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+volumes:
+  db:

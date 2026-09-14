@@ -1,0 +1,29 @@
+name: Tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check goodmem_rag tests scripts
+      - run: uv run pytest -q
+      - name: Check notebook syntax and clean outputs
+        run: |
+          uv run python - <<'PY'
+          from pathlib import Path
+          import nbformat
+          for path in Path('.').glob('*.ipynb'):
+              notebook = nbformat.read(path, as_version=4)
+              nbformat.validate(notebook)
+              for cell in notebook.cells:
+                  if cell.cell_type == 'code':
+                      compile(cell.source, str(path), 'exec')
+                      assert not cell.outputs, f'{path}: clear outputs before committing'
+          PY
