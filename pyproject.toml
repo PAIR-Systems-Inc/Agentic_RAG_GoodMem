@@ -39,5 +39,3 @@ select = ["E4", "E7", "E9", "F", "I"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-
-# Local review only. Replace with an approved release/commit before publishing.
